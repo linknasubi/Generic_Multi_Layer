@@ -19,110 +19,102 @@ plt.figure(figsize=(10,7))
 plt.scatter(feature_set[:,0], feature_set[:,1], c=labels, cmap=plt.cm.winter)
 
 
-weights_layers_input = []
 labels = labels.reshape(100,1)
 
 
-weights_layers_hidden = []
+'''
 
+    Foram definidos os valores básicos para que a iteração possa começar
+
+'''
+
+lr_rate = 0.55
 bias = np.random.rand(1)
-lrn_rate = 0.2
+graph_error_cost = []
+graph_error_counter = []
+
+hidden_layers = 4
+nodes_num = 9
 
 
-hidden_layers = 3 # Refere-se a quantidade de camadas desejáveis
-layer_counter = 0
-nodes = 4
-nodes_arrays = np.array([])
-nodes_layers_arrays = [] # Armazena a array de cada node no hidden layer em questão
-
-weights_layers_output = np.random.rand(nodes)
-weights_layers_output = weights_layers_output.reshape(nodes, 1)
-
-output_layer = np.array([])
-
-derv_layers_arrays = [] #Armazena as derivadas referentes a cada peso
-
-'''
-A sequência abaixo gera os valores corrrespondentes aos pesos que serão
-usados entre o input e a primeira camada hidden
-'''
+hidden_neurons_dot = np.zeros([hidden_layers,  len(feature_set), nodes_num])
+hidden_neurons_sig = np.zeros([hidden_layers,  len(feature_set), nodes_num])
 
 
-weight = np.random.rand(len(feature_set[0]), nodes) #Aqui é gerado os weights entre o input e a primeira camada hidden
-weights_layers_input.append(weight)
-
-nodes_arrays = np.dot(feature_set,weight)+bias
+input_weight = np.random.rand(nodes_num, len(feature_set[0]))
+hidden_weight = np.random.rand(hidden_layers-1, nodes_num, nodes_num)
 
 
-nodes_arrays = sigmoid(nodes_arrays)
-
-
-nodes_layers_arrays.append(nodes_arrays)
-
-
-
+output_weight = np.random.rand(nodes_num, len(labels[0]))
+output_neurons_dot = np.zeros([len(labels)])
+output_neurons_sig = np.zeros([len(labels)])
 
 '''
-A sequência abaixo gera os valores correspondentes ao cálculo entre os pesos
-das hidden layers em questão.
+    FeedForward
+
 '''
-
-
-
-for i in range(1, hidden_layers):
-    weight = np.random.rand(nodes, nodes)
-    weights_layers_hidden.append(weight)
-
-
-
-for i in range(1, len(weights_layers_hidden)):
     
-    nodes_arrays = np.dot(nodes_layers_arrays[-1+i],weights_layers_hidden[i])+bias
+for k in range(10000):
+
+    hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T)
+    hidden_neurons_sig[0] = sigmoid(hidden_neurons_dot[0])
     
     
-    nodes_arrays = sigmoid(nodes_arrays)
     
-
-    nodes_layers_arrays.append(nodes_arrays)
+    for i in range(1, hidden_layers):
+        
+        hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1])
+        hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) + bias
+        
+    
+    output_neurons_dot = np.dot(hidden_neurons_sig[-1], output_weight)
+    output_neurons_sig = sigmoid(output_neurons_dot) + bias
+    
+    error_cost = (1/(len(output_neurons_sig)))*sum(((output_neurons_sig-labels)**2))
+    
+    graph_error_cost.append(error_cost)
+    graph_error_counter.append(k)
+    
+    print(error_cost)
+    
+    '''
+        
+        BackForward
+    
+    '''
+    
+    dC_da_output = (1/len(output_neurons_sig)) * (output_neurons_sig-labels)
+    da_dz_output = sigmoid_derv(output_neurons_dot)
+    dz_dw_output = hidden_neurons_sig[-1]
+    dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T
+    
+    output_weight -= dC_dw_output * lr_rate
 
     
-output_layer_dot = np.dot(nodes_layers_arrays[-1], weights_layers_output) + bias
-
-output_layer_sig = sigmoid(output_layer_dot)
-
-
-error_cost = (1/len(nodes_layers_arrays[-1]))* sum(((output_layer_sig - labels)**2))
-print(error_cost)
-
-
-for i in range(len(nodes_layers_arrays)):
-    layer_counter-=1
+    for i in range( -1, -hidden_layers, -1):
+        
+        dC_da_hidden = dC_da_output
+        da_dz_hidden = sigmoid_derv(hidden_neurons_dot[i])
+        dz_dw_hidden = hidden_neurons_sig[i]
+        dC_dw_hidden = np.dot((dC_da_hidden*da_dz_hidden).T, dz_dw_hidden).T
     
-    dcost_da = (2/len(nodes_layers_arrays[layer_counter])) * sum((output_layer_sig - labels))
-    da_dz = sigmoid_derv(output_layer_dot)
-    dz_dw = nodes_layers_arrays[layer_counter].T
+        hidden_weight[i] -= dC_dw_hidden * lr_rate
     
-    dcost_w = np.dot(dz_dw, dcost_da*da_dz)
     
-    weights_layers_hidden[layer_counter] = weights_layers_hidden[layer_counter] - (dcost_w*error_cost*lrn_rate)
+    dC_dz_input = dC_da_output * da_dz_output
+    dz_da_input = output_weight
+    da_dz_input = sigmoid_derv(hidden_neurons_dot[0])
+    dz_dw_input = feature_set
+    
+    dC_dW_input = np.dot((dC_dz_input*da_dz_input).T, dz_dw_input)
+    
+    input_weight -= dC_dW_input * lr_rate
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+plt.figure()
+plt.plot(graph_error_counter, graph_error_cost, c='r')
 
 
 
