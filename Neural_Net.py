@@ -10,16 +10,12 @@ def sigmoid_derv(x):
     return (sigmoid(x))*(1-sigmoid(x))
 
 
-
 np.random.seed(0)
 feature_set, labels = datasets.make_moons(100, noise=0.10)
-
-
 plt.figure(figsize=(10,7))
 plt.scatter(feature_set[:,0], feature_set[:,1], c=labels, cmap=plt.cm.winter)
-
-
 labels = labels.reshape(100,1)
+
 
 
 '''
@@ -34,7 +30,8 @@ graph_error_cost = []
 graph_error_counter = []
 
 hidden_layers = 4
-nodes_num = 9
+nodes_num = 4
+
 
 
 hidden_neurons_dot = np.zeros([hidden_layers,  len(feature_set), nodes_num])
@@ -54,21 +51,23 @@ output_neurons_sig = np.zeros([len(labels)])
 
 '''
     
-for k in range(10000):
+for k in range(20000):
 
-    hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T)
+    hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T) + bias
     hidden_neurons_sig[0] = sigmoid(hidden_neurons_dot[0])
     
     
     
     for i in range(1, hidden_layers):
         
-        hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1])
-        hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) + bias
+        hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1]) + bias
+        hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) 
+
+
         
     
-    output_neurons_dot = np.dot(hidden_neurons_sig[-1], output_weight)
-    output_neurons_sig = sigmoid(output_neurons_dot) + bias
+    output_neurons_dot = np.dot(hidden_neurons_sig[-1], output_weight) + bias
+    output_neurons_sig = sigmoid(output_neurons_dot) 
     
     error_cost = (1/(len(output_neurons_sig)))*sum(((output_neurons_sig-labels)**2))
     
@@ -83,7 +82,7 @@ for k in range(10000):
     
     '''
     
-    dC_da_output = (1/len(output_neurons_sig)) * (output_neurons_sig-labels)
+    dC_da_output = (output_neurons_sig-labels)
     da_dz_output = sigmoid_derv(output_neurons_dot)
     dz_dw_output = hidden_neurons_sig[-1]
     dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T
@@ -93,7 +92,7 @@ for k in range(10000):
     
     for i in range( -1, -hidden_layers, -1):
         
-        dC_da_hidden = dC_da_output
+        dC_da_hidden = (output_neurons_sig-labels)
         da_dz_hidden = sigmoid_derv(hidden_neurons_dot[i])
         dz_dw_hidden = hidden_neurons_sig[i]
         dC_dw_hidden = np.dot((dC_da_hidden*da_dz_hidden).T, dz_dw_hidden).T
@@ -115,12 +114,6 @@ for k in range(10000):
 
 plt.figure()
 plt.plot(graph_error_counter, graph_error_cost, c='r')
-
-
-
-
-
-
 
 
 
