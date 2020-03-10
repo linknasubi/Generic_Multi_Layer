@@ -10,11 +10,29 @@ def sigmoid_derv(x):
     return (sigmoid(x))*(1-sigmoid(x))
 
 
+
+
+data = datasets.load_iris()
+
+
+#feature_set = data['data']
+#labels = data['target']
+#labels_1 = data['target']
+#
+#labels = labels.reshape(150, 1)
+#np.random.seed(0)
+#plt.scatter(feature_set[:,0], feature_set[:,1], c=labels_1)
+
 np.random.seed(0)
 feature_set, labels = datasets.make_moons(100, noise=0.10)
 plt.figure(figsize=(10,7))
 plt.scatter(feature_set[:,0], feature_set[:,1], c=labels, cmap=plt.cm.winter)
 labels = labels.reshape(100,1)
+
+
+
+
+
 
 
 
@@ -51,8 +69,10 @@ output_neurons_sig = np.zeros([len(labels)])
 
 '''
     
-for k in range(20000):
-
+for k in range(2000):
+    
+    
+    
     hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T) + bias
     hidden_neurons_sig[0] = sigmoid(hidden_neurons_dot[0])
     
@@ -85,27 +105,31 @@ for k in range(20000):
     dC_da_output = (output_neurons_sig-labels)
     da_dz_output = sigmoid_derv(output_neurons_dot)
     dz_dw_output = hidden_neurons_sig[-1]
-    dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T
+    dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T  + bias
     
     output_weight -= dC_dw_output * lr_rate
+    
 
     
     for i in range( -1, -hidden_layers, -1):
         
-        dC_da_hidden = (output_neurons_sig-labels)
         da_dz_hidden = sigmoid_derv(hidden_neurons_dot[i])
         dz_dw_hidden = hidden_neurons_sig[i]
-        dC_dw_hidden = np.dot((dC_da_hidden*da_dz_hidden).T, dz_dw_hidden).T
+        dC_db_hidden = da_dz_hidden*dC_da_output
+        
+        for j in dC_db_hidden:
+            bias =- sum(j) * lr_rate
+        
+        dC_dw_hidden = np.dot((dC_da_output*da_dz_hidden).T, dz_dw_hidden).T + bias
     
         hidden_weight[i] -= dC_dw_hidden * lr_rate
     
     
     dC_dz_input = dC_da_output * da_dz_output
-    dz_da_input = output_weight
     da_dz_input = sigmoid_derv(hidden_neurons_dot[0])
     dz_dw_input = feature_set
     
-    dC_dW_input = np.dot((dC_dz_input*da_dz_input).T, dz_dw_input)
+    dC_dW_input = np.dot((dC_dz_input*da_dz_input).T, dz_dw_input) + bias
     
     input_weight -= dC_dW_input * lr_rate
 
@@ -116,4 +140,4 @@ plt.figure()
 plt.plot(graph_error_counter, graph_error_cost, c='r')
 
 
-
+#[0.28516335]
