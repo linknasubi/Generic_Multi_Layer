@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import datasets
+import pandas as pd
 
 
 def sigmoid(x):
@@ -11,11 +12,22 @@ def sigmoid_derv(x):
     return (sigmoid(x))*(1-sigmoid(x))
 
 
-np.random.seed(15)
+np.random.seed(25)
 feature_set, labels = datasets.make_moons(100, noise=0.10)
 plt.figure(figsize=(10,7))
 plt.scatter(feature_set[:,0], feature_set[:,1], c=labels, cmap=plt.cm.winter)
-labels = labels.reshape(100,1)
+
+
+#f = open('sonar.csv', 'r')
+#df = pd.read_csv(f, delimiter=',')
+#f.close()
+#
+#feature_set = pd.DataFrame(df).iloc[:, 0:-1]
+#feature_set = feature_set.to_numpy()
+#labels = df['R'].replace('R', 0).replace('M', 1)
+#labels = labels.to_numpy()
+
+labels = labels.reshape(len(labels),1)
 
 
 
@@ -23,20 +35,18 @@ labels = labels.reshape(100,1)
     Foram definidos os valores básicos para que a iteração possa começar
 '''
 
-
-lr_rate = 0.4
-
+lr_rate = 0.25
 bias = np.random.rand(1)
 graph_error_cost = []
 graph_error_counter = []
 
-hidden_layers = 1
+hidden_layers = 2
 nodes_num = 4
 
 
-bias_input = np.random.rand(1)
-bias_layers_hidden = np.random.rand(hidden_layers)
-bias_output = np.random.rand(1)
+bias_input = np.random.rand(len(labels), 1)
+bias_layers_hidden = np.random.rand(hidden_layers, len(labels), 1)
+bias_output = np.random.rand(len(labels), 1)
 
 
 hidden_neurons_dot = np.zeros([hidden_layers,  len(feature_set), nodes_num])
@@ -53,30 +63,29 @@ output_neurons_sig = np.zeros([len(labels)])
 
 
 
+
 '''
     FeedForward
 '''
     
 for k in range(20000):
 
-    hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T) + bias
+    hidden_neurons_dot[0] = np.dot(feature_set, input_weight.T) + bias_input
     
     hidden_neurons_sig[0] = sigmoid(hidden_neurons_dot[0])
     
     
     
-    for i in range(1, hidden_layers):
+    for i in range(1, len(hidden_neurons_dot)):
         
-
         hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1]) + bias_layers_hidden[i-1]
-
         
         hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) 
 
 
         
     
-    output_neurons_dot = np.dot(hidden_neurons_sig[-1], output_weight) + bias
+    output_neurons_dot = np.dot(hidden_neurons_sig[-1], output_weight) + bias_output
     
     output_neurons_sig = sigmoid(output_neurons_dot) 
     
@@ -103,13 +112,11 @@ for k in range(20000):
     dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T
     
     output_weight -= dC_dw_output * lr_rate 
+    
+    bias_output -= np.mean(dC_da_output) * (np.mean(da_dz_output[0].T)) * lr_rate
 
     
-    bias_output -= sum(dC_da_output) * (np.mean(da_dz_output[0].T)) * lr_rate
-
-
-    
-    for i in range( -1, -hidden_layers, -1):
+    for i in range( -1, -len(hidden_neurons_sig), -1):
         
         dC_da_hidden = dC_da_output * da_dz_output * output_weight.T
         
@@ -121,12 +128,10 @@ for k in range(20000):
     
         hidden_weight[i] -= dC_dw_hidden * lr_rate
         
-        bias_layers_hidden[i] -= sum(dC_da_output) * (np.mean(da_dz_hidden[0].T)) * lr_rate
+        bias_layers_hidden[i] -= np.mean(dC_da_output) * (np.mean(da_dz_hidden[0].T)) * lr_rate
         
     
     
-    dC_da_input = dC_da_output * da_dz_output * output_weight.T
-
     dC_da_input = dC_da_output * da_dz_output * output_weight.T
     
     da_dz_input = sigmoid_derv(hidden_neurons_dot[0])
@@ -137,8 +142,8 @@ for k in range(20000):
     
     input_weight -= dC_dW_input * lr_rate
     
+    bias_input -= np.mean(dC_da_output) * (np.mean(da_dz_input[0].T)) * lr_rate
 
-    bias_input -= sum(dC_da_output) * (np.mean(da_dz_input[0].T)) * lr_rate
 
 
 
