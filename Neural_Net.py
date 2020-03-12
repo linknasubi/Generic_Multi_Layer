@@ -23,7 +23,9 @@ labels = labels.reshape(100,1)
     Foram definidos os valores básicos para que a iteração possa começar
 '''
 
-lr_rate = 0.45
+
+lr_rate = 0.4
+
 bias = np.random.rand(1)
 graph_error_cost = []
 graph_error_counter = []
@@ -31,6 +33,10 @@ graph_error_counter = []
 hidden_layers = 1
 nodes_num = 4
 
+
+bias_input = np.random.rand(1)
+bias_layers_hidden = np.random.rand(hidden_layers)
+bias_output = np.random.rand(1)
 
 
 hidden_neurons_dot = np.zeros([hidden_layers,  len(feature_set), nodes_num])
@@ -44,6 +50,8 @@ hidden_weight = np.random.rand(hidden_layers-1, nodes_num, nodes_num)
 output_weight = np.random.rand(nodes_num, len(labels[0]))
 output_neurons_dot = np.zeros([len(labels)])
 output_neurons_sig = np.zeros([len(labels)])
+
+
 
 '''
     FeedForward
@@ -59,7 +67,9 @@ for k in range(20000):
     
     for i in range(1, hidden_layers):
         
-        hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1]) + bias
+
+        hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1]) + bias_layers_hidden[i-1]
+
         
         hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) 
 
@@ -95,6 +105,10 @@ for k in range(20000):
     output_weight -= dC_dw_output * lr_rate 
 
     
+    bias_output -= sum(dC_da_output) * (np.mean(da_dz_output[0].T)) * lr_rate
+
+
+    
     for i in range( -1, -hidden_layers, -1):
         
         dC_da_hidden = dC_da_output * da_dz_output * output_weight.T
@@ -106,8 +120,13 @@ for k in range(20000):
         dC_dw_hidden = np.dot((dC_da_hidden*da_dz_hidden).T, dz_dw_hidden).T
     
         hidden_weight[i] -= dC_dw_hidden * lr_rate
+        
+        bias_layers_hidden[i] -= sum(dC_da_output) * (np.mean(da_dz_hidden[0].T)) * lr_rate
+        
     
     
+    dC_da_input = dC_da_output * da_dz_output * output_weight.T
+
     dC_da_input = dC_da_output * da_dz_output * output_weight.T
     
     da_dz_input = sigmoid_derv(hidden_neurons_dot[0])
@@ -119,13 +138,11 @@ for k in range(20000):
     input_weight -= dC_dW_input * lr_rate
     
 
+    bias_input -= sum(dC_da_output) * (np.mean(da_dz_input[0].T)) * lr_rate
 
 
 
 plt.figure()
 plt.plot(graph_error_counter, graph_error_cost, c='r')
 
-
-
-#[0.28516335]
 
