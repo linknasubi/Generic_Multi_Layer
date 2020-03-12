@@ -11,7 +11,7 @@ def sigmoid_derv(x):
     return (sigmoid(x))*(1-sigmoid(x))
 
 
-np.random.seed(0)
+np.random.seed(15)
 feature_set, labels = datasets.make_moons(100, noise=0.10)
 plt.figure(figsize=(10,7))
 plt.scatter(feature_set[:,0], feature_set[:,1], c=labels, cmap=plt.cm.winter)
@@ -23,7 +23,9 @@ labels = labels.reshape(100,1)
     Foram definidos os valores básicos para que a iteração possa começar
 '''
 
+
 lr_rate = 0.4
+
 bias = np.random.rand(1)
 graph_error_cost = []
 graph_error_counter = []
@@ -65,7 +67,9 @@ for k in range(20000):
     
     for i in range(1, hidden_layers):
         
+
         hidden_neurons_dot[i] = np.dot(hidden_neurons_sig[i-1], hidden_weight[i-1]) + bias_layers_hidden[i-1]
+
         
         hidden_neurons_sig[i] = sigmoid(hidden_neurons_dot[i]) 
 
@@ -99,8 +103,10 @@ for k in range(20000):
     dC_dw_output = np.dot((dC_da_output*da_dz_output).T, dz_dw_output).T
     
     output_weight -= dC_dw_output * lr_rate 
+
     
     bias_output -= sum(dC_da_output) * (np.mean(da_dz_output[0].T)) * lr_rate
+
 
     
     for i in range( -1, -hidden_layers, -1):
@@ -120,6 +126,8 @@ for k in range(20000):
     
     
     dC_da_input = dC_da_output * da_dz_output * output_weight.T
+
+    dC_da_input = dC_da_output * da_dz_output * output_weight.T
     
     da_dz_input = sigmoid_derv(hidden_neurons_dot[0])
     
@@ -129,11 +137,12 @@ for k in range(20000):
     
     input_weight -= dC_dW_input * lr_rate
     
-    bias_input -= sum(dC_da_output) * (np.mean(da_dz_input[0].T)) * lr_rate
 
+    bias_input -= sum(dC_da_output) * (np.mean(da_dz_input[0].T)) * lr_rate
 
 
 
 plt.figure()
 plt.plot(graph_error_counter, graph_error_cost, c='r')
+
 
